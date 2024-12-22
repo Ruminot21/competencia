@@ -178,6 +178,14 @@
 
         document.getElementById('entryFee').value = defaultEntryFee;
 
+        // Agregar evento de teclado para la tecla "Enter"
+        document.getElementById('participantName').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Evita que se envíe el formulario si es un formulario (aunque no tenemos un formulario real)
+                addParticipant(); // Llama a la función de agregar participante
+            }
+        });
+
         function showTab(index) {
             const tabs = document.querySelectorAll('.tab');
             const contents = document.querySelectorAll('.tab-content');
