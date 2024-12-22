@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Concurso de Pesca</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+        }
+        h1 {
+            text-align: center;
+            color: #ffffff;
+        }
+        .tabs {
+            display: flex;
+            cursor: pointer;
+            justify-content: center;
+            margin-bottom: 20px;
+            background-color: #16213e;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background-color: #0f3460;
+            transition: background-color 0.3s ease;
+        }
+        .tab.active {
+            background-color: #16213e;
+        }
+        .tab:hover {
+            background-color: #53354a;
+        }
+        .tab-content {
+            display: none;
+            background-color: #0f3460;
+            border: 1px solid #ccc;
+            border-top: none;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            outline: none;
+            transition: box-shadow 0.3s ease;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        input:focus {
+            box-shadow: 0 0 10px #53354a;
+        }
+        button {
+            background-color: #e94560;
+            color: #ffffff;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #da1c39;
+        }
+        .participants-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .participants-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .participants-list li {
+            background-color: #16213e;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        .top-ranking {
+            background-color: #28a745;
+            color: #1AAF31;
+            font-weight: bold;
+        }
+        .reset-button {
+            background-color: #c70039;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            float: right;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .reset-button:hover {
+            background-color: #a60032;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Concurso de Pesca</h1>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showTab(0)">Inscripción</div>
+        <div class="tab" onclick="showTab(1)">Lista de Participantes</div>
+        <div class="tab" onclick="showTab(2)">Clasificación</div>
+    </div>
+
+    <div class="tab-content active">
+        <button class="reset-button" onclick="resetSystem()">Restaurar Sistema</button>
+        <div class="form-group">
+            <label for="participantName">Nombre del Participante:</label>
+            <input type="text" id="participantName" required>
+        </div>
+        <div class="form-group">
+            <label for="entryFee">Valor de Inscripción:</label>
+            <input type="number" id="entryFee" value="1000" required>
+            <button onclick="saveEntryFee()">Guardar Cambios</button>
+        </div>
+        <button onclick="addParticipant()">Anotar Participante</button>
+    </div>
+
+    <div class="tab-content">
+        <div class="participants-list">
+            <h2>Lista de Participantes</h2>
+            <ul id="participants">
+                <!-- Lista de participantes -->
+            </ul>
+        </div>
+    </div>
+
+    <div class="tab-content">
+        <div class="participants-list">
+            <h2>Clasificación</h2>
+            <ul id="ranking">
+                <!-- Lista de clasificación -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let participants = JSON.parse(localStorage.getItem('participants')) || [];
+        let defaultEntryFee = parseFloat(localStorage.getItem('defaultEntryFee')) || 1000;
+
+        document.getElementById('entryFee').value = defaultEntryFee;
+
+        function showTab(index) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach((tab, i) => {
+                tab.classList.toggle('active', i === index);
+                contents[i].classList.toggle('active', i === index);
+            });
+        }
+
+        function resetSystem() {
+            participants = [];
+            localStorage.removeItem('participants');
+            localStorage.removeItem('defaultEntryFee');
+            updateParticipantList();
+            updateRanking();
+            alert('Sistema restaurado.');
+        }
+
+        function addParticipant() {
+            const name = document.getElementById('participantName').value;
+            const fee = document.getElementById('entryFee').value;
+
+            if (name && fee) {
+                const participant = {
+                    name,
+                    fee: parseFloat(fee),
+                    fishCount: 0
+                };
+                participants.push(participant);
+                localStorage.setItem('participants', JSON.stringify(participants));
+
+                updateParticipantList();
+                
+                document.getElementById('participantName').value = '';
+                document.getElementById('entryFee').value = defaultEntryFee;
+            } else {
+                alert('Por favor, completa todos los campos.');
+            }
+        }
+
+        function updateParticipantList() {
+            const participantsList = document.getElementById('participants');
+            participantsList.innerHTML = '';
+            participants.forEach((participant, index) => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    ${participant.name} - Inscripción: $${participant.fee.toFixed(2)} 
+                    <input type="number" value="${participant.fishCount}" min="0" onchange="updateFishCount(${index}, this.value)">
+                `;
+                participantsList.appendChild(listItem);
+            });
+        }
+
+        function updateFishCount(index, value) {
+            participants[index].fishCount = parseInt(value);
+            localStorage.setItem('participants', JSON.stringify(participants));
+            updateRanking();
+        }
+
+        function saveEntryFee() {
+            const newFee = parseFloat(document.getElementById('entryFee').value);
+            if (newFee >= 0) {
+                defaultEntryFee = newFee;
+                localStorage.setItem('defaultEntryFee', defaultEntryFee);
+                alert(`Nuevo valor de inscripción guardado: $${defaultEntryFee.toFixed(2)}`);
+            } else {
+                alert('Por favor, ingresa un valor válido para la inscripción.');
+                document.getElementById('entryFee').value = defaultEntryFee;
+            }
+        }
+
+        function updateRanking() {
+            const rankingList = document.getElementById('ranking');
+            rankingList.innerHTML = '';
+            const sortedParticipants = [...participants].sort((a, b) => b.fishCount - a.fishCount);
+            sortedParticipants.forEach((participant, index) => {
+                const listItem = document.createElement('li');
+                let rankLabel = `${index + 1}°`;
+
+                listItem.innerHTML = `${rankLabel} ${participant.name} - Cantidad: ${participant.fishCount}`;
+
+                if (index < 3) {
+                    listItem.classList.add('top-ranking');
+                }
+                rankingList.appendChild(listItem);
+            });
+        }
+
+        // Inicializar listas
+        updateParticipantList();
+        updateRanking();
+    </script>
+
+</body>
+</html>
