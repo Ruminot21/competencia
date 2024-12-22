@@ -157,6 +157,8 @@
     <div class="tab-content">
         <div class="participants-list">
             <h2>Lista de Participantes</h2>
+            <p id="participantCount"></p>
+            <p id="totalFee"></p>
             <ul id="participants">
                 <!-- Lista de participantes -->
             </ul>
@@ -194,6 +196,11 @@
                 tab.classList.toggle('active', i === index);
                 contents[i].classList.toggle('active', i === index);
             });
+
+            if (index === 1) {
+                updateParticipantCount();
+                updateTotalFee();
+            }
         }
 
         function resetSystem() {
@@ -273,6 +280,16 @@
                 }
                 rankingList.appendChild(listItem);
             });
+        }
+
+        function updateParticipantCount() {
+            const count = participants.length;
+            document.getElementById('participantCount').textContent = `Cantidad de Participantes: ${count}`;
+        }
+
+        function updateTotalFee() {
+            const totalFee = participants.reduce((acc, participant) => acc + participant.fee, 0);
+            document.getElementById('totalFee').textContent = `Total de Inscripción: $${totalFee.toFixed(2)}`;
         }
 
         // Inicializar listas
